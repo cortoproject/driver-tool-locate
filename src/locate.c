@@ -100,6 +100,9 @@ int cortomain(int argc, char *argv[]) {
                 printf("\n");
             }
         }
+
+        /* This will mute the 'cortomain failed' error */
+        corto_seterr("");
         goto error;
     }
 
