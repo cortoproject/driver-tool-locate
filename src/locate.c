@@ -41,7 +41,7 @@ int cortomain(int argc, char *argv[]) {
                 error_only = TRUE;
             }
             if (!strcmp(argv[i], "--verbose")) {
-                corto_verbosity(CORTO_DEBUG);
+                corto_log_verbositySet(CORTO_DEBUG);
             }
         }
     }
@@ -58,8 +58,8 @@ int cortomain(int argc, char *argv[]) {
             }
             ptr++;
         }
-        location = corto_envparse("$CORTO_TARGET/redistr/corto/$CORTO_VERSION/lib/lib%s.so", package);
-        if (!corto_fileTest(location)) {
+        location = corto_envparse("$BAKE_TARGET/redistr/corto/$BAKE_VERSION/lib/lib%s.so", package);
+        if (!corto_file_test(location)) {
             corto_trace("library '%s' not found", location);
             corto_dealloc(location);
             location = NULL;
@@ -102,7 +102,7 @@ int cortomain(int argc, char *argv[]) {
         }
 
         /* This will mute the 'cortomain failed' error */
-        corto_seterr("");
+        corto_throw("");
         goto error;
     }
 
