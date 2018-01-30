@@ -15,9 +15,15 @@ void cortotool_toLibPath(char *location) {
 }
 
 int cortomain(int argc, char *argv[]) {
-    char *location;
-    bool lib = FALSE, path = FALSE, env = FALSE, silent = FALSE, lib_redistr = FALSE;
-    bool error_only = FALSE;
+    bool
+        lib = FALSE,
+        bin = FALSE,
+        app = FALSE,
+        path = FALSE,
+        env = FALSE,
+        etc = FALSE,
+        include = FALSE,
+        no_arg = FALSE;
 
     if (argc <= 1) {
         printf("please provide a package name\n");
@@ -27,18 +33,20 @@ int cortomain(int argc, char *argv[]) {
     if (argc > 2) {
         int i = 0;
         for (i = 2; i < argc; i++) {
-            if (!strcmp(argv[i], "--lib")) {
-                lib = TRUE;
-            } else if (!strcmp(argv[i], "--path")) {
+            if (!strcmp(argv[i], "--path")) {
                 path = TRUE;
-            } else if (!strcmp(argv[i], "--lib-redistr")) {
-                lib_redistr = TRUE;
             } else if (!strcmp(argv[i], "--env")) {
                 env = TRUE;
-            } else if (!strcmp(argv[i], "--silent")) {
-                silent = TRUE;
-            } else if (!strcmp(argv[i], "--error_only")) {
-                error_only = TRUE;
+            } else if (!strcmp(argv[i], "--etc")) {
+                etc = TRUE;
+            } else if (!strcmp(argv[i], "--include")) {
+                include = TRUE;
+            } else if (!strcmp(argv[i], "--lib")) {
+                lib = TRUE;
+            } else if (!strcmp(argv[i], "--app")) {
+                app = TRUE;
+            } else if (!strcmp(argv[i], "--bin")) {
+                bin = TRUE;
             }
             if (!strcmp(argv[i], "--verbose")) {
                 corto_log_verbositySet(CORTO_DEBUG);
@@ -46,70 +54,38 @@ int cortomain(int argc, char *argv[]) {
         }
     }
 
-    if (!lib_redistr) {
-        const char *const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_LIB);
-        if (const_location) {
-            location = corto_strdup(const_location);
-        }
+    const char *const_location = NULL;
+    if (path) {
+        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_PACKAGE);
+    } else if (env) {
+        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_ENV);
+    } else if (etc) {
+        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_ETC);
+    } else if (include) {
+        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_INCLUDE);
+    } else if (lib) {
+        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_LIB);
+    } else if (app) {
+        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_APP);
+    } else if (bin) {
+        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_BIN);
     } else {
-        corto_id package;
-        strcpy(package, argv[1][0] == '/' ? argv[1] + 1 : argv[1]);
-        char *ptr = package, ch;
-        while ((ch = *ptr)) {
-            if (ch == '/') {
-                *ptr = '_';
-            }
-            ptr++;
+        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_BIN);
+        if (!const_location) {
+            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_PACKAGE);
         }
-        location = corto_envparse("$BAKE_TARGET/redistr/corto/$BAKE_VERSION/lib/lib%s.so", package);
-        if (!corto_file_test(location)) {
-            corto_trace("library '%s' not found", location);
-            corto_dealloc(location);
-            location = NULL;
+        if (const_location) {
+            corto_log("#[bold]%s#[grey] => %s\n", argv[1], const_location);
         }
+        no_arg = TRUE;
     }
 
-    if (location) {
-        if (env) {
-            char *ptr = location;
-            while (*ptr) {
-                if (!memcmp(ptr, "/lib", 4)) {
-                    *ptr = '\0';
-                    break;
-                }
-                ptr++;
-            }
-        } else if (path && !lib) {
-            cortotool_toLibPath(location);
-        }
-
-        if (lib || lib_redistr || path || env) {
-            if (!silent && !error_only) printf("%s\n", location);
-        } else {
-            if (!silent && !error_only) printf("%s%s%s  =>  %s\n", CORTO_CYAN, argv[1], CORTO_NORMAL, location);
-        }
-    } else {
-        if (!silent) {
-            if (!error_only) {
-                if (lib_redistr) {
-                    printf("redistributable library for package '%s' not found", argv[1]);
-                } else {
-                    printf("package '%s' not located: ", argv[1]);
-                }
-            }
-            if (corto_lastinfo()) {
-                printf("%s\n", corto_lastinfo());
-            } else {
-                printf("\n");
-            }
-        }
-
-        /* This will mute the 'cortomain failed' error */
-        corto_throw("");
+    if (!no_arg && const_location) {
+        printf("%s\n", const_location);
+    } else if (!const_location) {
+        corto_log("#[bold]%s#[grey] => #[red]not found!\n", argv[1]);
         goto error;
     }
-
-    corto_dealloc(location);
 
     return 0;
 error:
