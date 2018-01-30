@@ -47,7 +47,10 @@ int cortomain(int argc, char *argv[]) {
     }
 
     if (!lib_redistr) {
-        location = corto_locate(argv[1], NULL, CORTO_LOCATION_LIB);
+        const char *const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_LIB);
+        if (const_location) {
+            location = corto_strdup(const_location);
+        }
     } else {
         corto_id package;
         strcpy(package, argv[1][0] == '/' ? argv[1] + 1 : argv[1]);
@@ -112,4 +115,3 @@ int cortomain(int argc, char *argv[]) {
 error:
     return -1;
 }
-
