@@ -23,6 +23,7 @@ int cortomain(int argc, char *argv[]) {
         env = FALSE,
         etc = FALSE,
         include = FALSE,
+        all = FALSE,
         no_arg = FALSE;
 
     if (argc <= 1) {
@@ -47,6 +48,8 @@ int cortomain(int argc, char *argv[]) {
                 app = TRUE;
             } else if (!strcmp(argv[i], "--bin")) {
                 bin = TRUE;
+            } else if (!strcmp(argv[i], "--all")) {
+                all = TRUE;
             }
             if (!strcmp(argv[i], "--verbose")) {
                 corto_log_verbositySet(CORTO_DEBUG);
@@ -55,34 +58,50 @@ int cortomain(int argc, char *argv[]) {
     }
 
     const char *const_location = NULL;
-    if (path) {
+    if (all) {
         const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_PACKAGE);
-    } else if (env) {
-        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_ENV);
-    } else if (etc) {
-        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_ETC);
-    } else if (include) {
-        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_INCLUDE);
-    } else if (lib) {
-        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_LIB);
-    } else if (app) {
-        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_APP);
-    } else if (bin) {
-        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_BIN);
-    } else {
-        const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_BIN);
-        if (!const_location) {
-            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_PACKAGE);
-        }
         if (const_location) {
-            corto_log("#[bold]%s#[grey] => %s\n", argv[1], const_location);
+            corto_log("#[bold]%s\n", argv[1]);
+            corto_log(" path     #[grey]=> %s\n", const_location);
+            corto_log(" include  #[grey]=> %s\n", corto_locate(argv[1], NULL, CORTO_LOCATE_INCLUDE));
+            corto_log(" etc      #[grey]=> %s\n", corto_locate(argv[1], NULL, CORTO_LOCATE_ETC));
+            corto_log(" env      #[grey]=> %s\n", corto_locate(argv[1], NULL, CORTO_LOCATE_ENV));
+            corto_log(" lib      #[grey]=> %s\n", corto_locate(argv[1], NULL, CORTO_LOCATE_LIB));
+            corto_log(" app      #[grey]=> %s\n", corto_locate(argv[1], NULL, CORTO_LOCATE_APP));
+            corto_log(" bin      #[grey]=> %s\n", corto_locate(argv[1], NULL, CORTO_LOCATE_BIN));
         }
-        no_arg = TRUE;
+    } else {
+        if (path) {
+            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_PACKAGE);
+        } else if (env) {
+            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_ENV);
+        } else if (etc) {
+            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_ETC);
+        } else if (include) {
+            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_INCLUDE);
+        } else if (lib) {
+            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_LIB);
+        } else if (app) {
+            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_APP);
+        } else if (bin) {
+            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_BIN);
+        } else {
+            const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_BIN);
+            if (!const_location) {
+                const_location = corto_locate(argv[1], NULL, CORTO_LOCATE_PACKAGE);
+            }
+            if (const_location) {
+                corto_log("#[bold]%s#[grey] => %s\n", argv[1], const_location);
+            }
+            no_arg = TRUE;
+        }
+
+        if (!no_arg && const_location) {
+            printf("%s\n", const_location);
+        }
     }
 
-    if (!no_arg && const_location) {
-        printf("%s\n", const_location);
-    } else if (!const_location) {
+    if (!const_location) {
         corto_log("#[bold]%s#[grey] => #[red]not found!\n", argv[1]);
         goto error;
     }
