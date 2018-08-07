@@ -1,10 +1,10 @@
 {
-    "id": "driver/tool/locate",
+    "id": "driver.tool.locate",
     "type": "package",
     "value": {
         "author": "Sander Mertens",
         "description": "Locate command for corto tool",
         "managed": false,
-        "use": ["corto", "corto/argparse"]
+        "use": ["corto", "corto.util.argparse"]
     }
 }
